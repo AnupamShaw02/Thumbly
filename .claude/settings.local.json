@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run dev)"
+      "Bash(npm run dev)",
+      "Bash(ls -la c:/Users/anupa/Desktop/Thumbly/server/.env*)"
     ]
   }
 }
