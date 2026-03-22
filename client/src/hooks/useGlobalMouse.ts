@@ -1,7 +1,4 @@
 import { useEffect } from 'react';
-import { useMotionValue } from 'framer-motion';
-
-// Singleton motion values shared across all consumers
 import { motionValue } from 'framer-motion';
 
 const globalX = motionValue(-9999);

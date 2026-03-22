@@ -57,7 +57,7 @@ function Word({
     const rect = ref.current.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    const dist = Math.sqrt((mx - cx) ** 2 + (my - cy) ** 2);
+    const dist = Math.sqrt((Number(mx) - cx) ** 2 + (Number(my) - cy) ** 2);
     const val = Math.max(0, 1 - dist / radius);
     rawBrightness.set(val);
     return val;

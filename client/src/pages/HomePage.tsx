@@ -219,7 +219,7 @@ function HeroSection() {
           <WordHighlight
             text={siteData.hero.description}
             className="text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed text-center"
-            baseColor="text-slate-500"
+
             glowColor="#67e8f9"
             radius={130}
           />
