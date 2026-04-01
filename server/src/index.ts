@@ -17,13 +17,9 @@ declare module 'express-session' {
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
 
-// CORS must be first — before anything that can error
-const allowedOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+// CORS — reflect request origin so credentials work on any Vercel preview URL
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || origin === allowedOrigin) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
