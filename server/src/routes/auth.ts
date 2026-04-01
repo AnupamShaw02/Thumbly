@@ -24,6 +24,10 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
     const user = await User.create({ name, email, password });
     req.session.userId = user._id.toString();
 
+    await new Promise<void>((resolve, reject) =>
+      req.session.save((err) => (err ? reject(err) : resolve()))
+    );
+
     res.status(201).json({
       user: { id: user._id, name: user.name, email: user.email },
     });
@@ -49,6 +53,10 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     }
 
     req.session.userId = user._id.toString();
+
+    await new Promise<void>((resolve, reject) =>
+      req.session.save((err) => (err ? reject(err) : resolve()))
+    );
 
     res.json({
       user: { id: user._id, name: user.name, email: user.email },
