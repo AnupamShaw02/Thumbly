@@ -18,8 +18,16 @@ const app = express();
 const isProd = process.env.NODE_ENV === 'production';
 
 // CORS must be first — before anything that can error
-const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
-app.use(cors({ origin: allowedOrigin, credentials: true }));
+const allowedOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || origin === allowedOrigin) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // Lazy DB connection for serverless
