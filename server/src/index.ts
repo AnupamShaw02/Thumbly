@@ -5,7 +5,6 @@ import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import { connectDB } from './config/db';
 import { configureCloudinary } from './config/cloudinary';
-import passport from './config/passport';
 import authRoutes from './routes/auth';
 import thumbnailRoutes from './routes/thumbnails';
 
@@ -50,7 +49,7 @@ app.use(session({
   },
 }));
 
-app.use(passport.initialize());
+
 app.use('/api/auth', authRoutes);
 app.use('/api/thumbnails', thumbnailRoutes);
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));

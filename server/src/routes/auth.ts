@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { User } from '../models/User';
 import { requireAuth } from '../middleware/auth';
 
+
 const router = Router();
 
 // POST /api/auth/signup
@@ -82,5 +83,6 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 export default router;
