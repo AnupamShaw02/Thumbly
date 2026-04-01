@@ -5,6 +5,7 @@ import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import { connectDB } from './config/db';
 import { configureCloudinary } from './config/cloudinary';
+import passport from './config/passport';
 import authRoutes from './routes/auth';
 import thumbnailRoutes from './routes/thumbnails';
 
@@ -17,6 +18,11 @@ declare module 'express-session' {
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
 
+// CORS must be first — before anything that can error
+const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+app.use(cors({ origin: allowedOrigin, credentials: true }));
+app.use(express.json({ limit: '10mb' }));
+
 // Lazy DB connection for serverless
 let isReady = false;
 app.use(async (_req, _res, next) => {
@@ -27,12 +33,6 @@ app.use(async (_req, _res, next) => {
   }
   next();
 });
-
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true,
-}));
-app.use(express.json({ limit: '10mb' }));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev_secret',
@@ -50,6 +50,7 @@ app.use(session({
   },
 }));
 
+app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api/thumbnails', thumbnailRoutes);
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
