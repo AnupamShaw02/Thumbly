@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import { clerkMiddleware } from '@clerk/express';
+import { clerkMiddleware, getAuth } from '@clerk/express';
 import { connectDB } from './config/db';
 import { configureCloudinary } from './config/cloudinary';
 import thumbnailRoutes from './routes/thumbnails';
@@ -16,7 +16,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json({ limit: '10mb' }));
-app.use(clerkMiddleware());
+app.use(clerkMiddleware({
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+  secretKey: process.env.CLERK_SECRET_KEY,
+}));
 
 // Lazy DB connection for serverless
 let isReady = false;
@@ -31,6 +34,20 @@ app.use(async (_req, _res, next) => {
 
 app.use('/api/thumbnails', thumbnailRoutes);
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
+
+// Debug: check if Clerk token is being received and verified
+app.get('/api/auth/debug', (req: Request, res: Response) => {
+  const auth = getAuth(req);
+  res.json({ userId: auth.userId, sessionId: auth.sessionId });
+});
+
+// Global error handler — ensures auth errors also return { message }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status ?? err.statusCode ?? 500;
+  console.error(`[error] ${status}:`, err.message ?? err);
+  res.status(status).json({ message: err.message || 'Server error' });
+});
 
 // Local dev only
 if (!isProd) {

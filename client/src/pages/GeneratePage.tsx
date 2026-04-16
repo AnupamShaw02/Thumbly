@@ -70,8 +70,10 @@ export default function GeneratePage() {
       navigate(`/preview/${res.data.thumbnail._id}`);
     } catch (err: unknown) {
       toast.dismiss(toastId);
+      const e = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        e?.response?.data?.message ||
+        (e?.response?.status ? `Error ${e.response.status}` : e?.message) ||
         'Generation failed. Please try again.';
       toast.error(msg);
     } finally {
