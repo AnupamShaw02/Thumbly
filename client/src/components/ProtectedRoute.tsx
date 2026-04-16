@@ -1,12 +1,12 @@
+import { useUser } from '@clerk/clerk-react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import LoadingScreen from './LoadingScreen';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
 
-  if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!isLoaded) return <LoadingScreen />;
+  if (!isSignedIn) return <Navigate to="/login" replace />;
 
   return <>{children}</>;
 }

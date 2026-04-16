@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingScreen from './components/LoadingScreen';
@@ -9,13 +11,17 @@ import SignupPage from './pages/SignupPage';
 import GeneratePage from './pages/GeneratePage';
 import GalleryPage from './pages/GalleryPage';
 import PreviewPage from './pages/PreviewPage';
-import { useAuth } from './context/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
+import { setTokenGetter } from './services/api';
 
 export default function App() {
-  const { loading } = useAuth();
+  const { isLoaded, getToken } = useAuth();
 
-  if (loading) return <LoadingScreen />;
+  useEffect(() => {
+    setTokenGetter(() => getToken());
+  }, [getToken]);
+
+  if (!isLoaded) return <LoadingScreen />;
 
   return (
     <>

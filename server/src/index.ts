@@ -1,23 +1,14 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import session from 'express-session';
-import MongoStore from 'connect-mongo';
+import { clerkMiddleware } from '@clerk/express';
 import { connectDB } from './config/db';
 import { configureCloudinary } from './config/cloudinary';
-import authRoutes from './routes/auth';
 import thumbnailRoutes from './routes/thumbnails';
-
-declare module 'express-session' {
-  interface SessionData {
-    userId: string;
-  }
-}
 
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
 
-// CORS — reflect request origin so credentials work on any Vercel preview URL
 app.use(cors({
   origin: true,
   credentials: true,
@@ -25,6 +16,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use(clerkMiddleware());
 
 // Lazy DB connection for serverless
 let isReady = false;
@@ -37,24 +29,6 @@ app.use(async (_req, _res, next) => {
   next();
 });
 
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'dev_secret',
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI!,
-    ttl: 7 * 24 * 60 * 60,
-  }),
-  cookie: {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  },
-}));
-
-
-app.use('/api/auth', authRoutes);
 app.use('/api/thumbnails', thumbnailRoutes);
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 

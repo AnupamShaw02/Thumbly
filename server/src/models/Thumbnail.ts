@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IThumbnail extends Document {
-  userId: mongoose.Types.ObjectId;
+  userId: string;
   imageUrl: string;
   cloudinaryId: string;
   promptData: {
@@ -16,7 +16,7 @@ export interface IThumbnail extends Document {
 
 const ThumbnailSchema = new Schema<IThumbnail>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: String, required: true, index: true },
     imageUrl: { type: String, required: true },
     cloudinaryId: { type: String, required: true },
     promptData: {

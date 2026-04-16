@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import axios from 'axios';
 import FormData from 'form-data';
+import { getAuth } from '@clerk/express';
 import { cloudinary } from '../config/cloudinary';
 import { Thumbnail } from '../models/Thumbnail';
 import { requireAuth } from '../middleware/auth';
@@ -8,11 +9,12 @@ import { requireAuth } from '../middleware/auth';
 const router = Router();
 
 // All thumbnail routes require auth
-router.use(requireAuth);
+router.use(requireAuth());
 
 // POST /api/thumbnails/generate
 router.post('/generate', async (req: Request, res: Response): Promise<void> => {
   try {
+    const { userId } = getAuth(req) as { userId: string };
     const { title, style, aspectRatio, colorScheme, additionalDetails } = req.body;
 
     if (!title) {
@@ -50,12 +52,12 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
     // Upload to Cloudinary
     const uploadResult = await cloudinary.uploader.upload(base64Image, {
       folder: 'thumbly',
-      public_id: `thumb_${req.session.userId}_${Date.now()}`,
+      public_id: `thumb_${userId}_${Date.now()}`,
     });
 
     // Save to DB
     const thumbnail = await Thumbnail.create({
-      userId: req.session.userId,
+      userId,
       imageUrl: uploadResult.secure_url,
       cloudinaryId: uploadResult.public_id,
       promptData: {
@@ -77,7 +79,8 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
 // GET /api/thumbnails — list user's thumbnails
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const thumbnails = await Thumbnail.find({ userId: req.session.userId, promptData: { $exists: true } }).sort({ createdAt: -1 });
+    const { userId } = getAuth(req) as { userId: string };
+    const thumbnails = await Thumbnail.find({ userId, promptData: { $exists: true } }).sort({ createdAt: -1 });
     res.json({ thumbnails });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -87,9 +90,10 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 // GET /api/thumbnails/:id — get single thumbnail
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
+    const { userId } = getAuth(req) as { userId: string };
     const thumbnail = await Thumbnail.findOne({
       _id: req.params.id,
-      userId: req.session.userId,
+      userId,
     });
 
     if (!thumbnail) {
@@ -106,9 +110,10 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 // DELETE /api/thumbnails/:id
 router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
+    const { userId } = getAuth(req) as { userId: string };
     const thumbnail = await Thumbnail.findOne({
       _id: req.params.id,
-      userId: req.session.userId,
+      userId,
     });
 
     if (!thumbnail) {

@@ -2,17 +2,18 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Menu, X, LogOut, Image, Wand2, Home } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useUser, useClerk } from '@clerk/clerk-react';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, isSignedIn } = useUser();
+  const { signOut } = useClerk();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
-    ...(user
+    ...(isSignedIn
       ? [
           { href: '/generate', label: 'Generate', icon: Wand2 },
           { href: '/gallery', label: 'My Thumbnails', icon: Image },
@@ -24,10 +25,13 @@ export default function Navbar() {
     href === '/' ? location.pathname === '/' : location.pathname.startsWith(href);
 
   const handleLogout = async () => {
-    await logout();
+    await signOut();
     navigate('/');
     setMobileOpen(false);
   };
+
+  const displayName = user?.fullName || user?.firstName || 'User';
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
@@ -72,13 +76,13 @@ export default function Navbar() {
 
             {/* Desktop auth */}
             <div className="hidden md:flex items-center gap-2.5">
-              {user ? (
+              {isSignedIn ? (
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.07]">
                     <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-xs font-bold text-white">
-                      {user.name.charAt(0).toUpperCase()}
+                      {initial}
                     </div>
-                    <span className="text-sm text-slate-300 font-medium">{user.name}</span>
+                    <span className="text-sm text-slate-300 font-medium">{displayName}</span>
                   </div>
                   <button
                     onClick={handleLogout}
@@ -96,7 +100,6 @@ export default function Navbar() {
                   >
                     Log in
                   </Link>
-                  {/* Pulsing cyan glow CTA */}
                   <div className="relative">
                     <div className="absolute inset-0 rounded-xl bg-cyan-500/25 blur-sm animate-pulse" />
                     <Link
@@ -161,13 +164,13 @@ export default function Navbar() {
                 ))}
 
                 <div className="pt-3 mt-2 border-t border-white/[0.05] space-y-2">
-                  {user ? (
+                  {isSignedIn ? (
                     <>
                       <div className="flex items-center gap-2.5 px-4 py-2">
                         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-sm font-bold text-white">
-                          {user.name.charAt(0).toUpperCase()}
+                          {initial}
                         </div>
-                        <span className="text-sm text-slate-300 font-medium">{user.name}</span>
+                        <span className="text-sm text-slate-300 font-medium">{displayName}</span>
                       </div>
                       <button
                         onClick={handleLogout}
