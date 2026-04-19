@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import axios from 'axios';
-import FormData from 'form-data';
 import { getAuth } from '@clerk/express';
 import { cloudinary } from '../config/cloudinary';
 import { Thumbnail } from '../models/Thumbnail';
@@ -22,32 +21,33 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const clipdropKey = process.env.CLIPDROP_API_KEY;
-    if (!clipdropKey) {
-      res.status(500).json({ message: 'Clipdrop API key not configured' });
+    const xaiKey = process.env.XAI_API_KEY;
+    if (!xaiKey) {
+      res.status(500).json({ message: 'xAI API key not configured' });
       return;
     }
 
     const imagePrompt = `YouTube thumbnail for "${title}", ${style || 'modern'} style, ${colorScheme || 'vibrant'} color scheme, bold text overlay, high contrast, eye-catching, professional design${additionalDetails ? `, ${additionalDetails}` : ''}`;
 
-    // Call Clipdrop text-to-image API
-    const form = new FormData();
-    form.append('prompt', imagePrompt);
-
-    const clipdropResponse = await axios.post(
-      'https://clipdrop-api.co/text-to-image/v1',
-      form,
+    // Call xAI (Grok) image generation API
+    const xaiResponse = await axios.post(
+      'https://api.x.ai/v1/images/generations',
+      {
+        model: 'aurora',
+        prompt: imagePrompt,
+        n: 1,
+      },
       {
         headers: {
-          'x-api-key': clipdropKey,
-          ...form.getHeaders(),
+          'Authorization': `Bearer ${xaiKey}`,
+          'Content-Type': 'application/json',
         },
-        responseType: 'arraybuffer',
         timeout: 60000,
       }
     );
 
-    const base64Image = `data:image/png;base64,${Buffer.from(clipdropResponse.data).toString('base64')}`;
+    const imageUrl = xaiResponse.data.data[0].url;
+    const base64Image = imageUrl;
 
     // Upload to Cloudinary
     const uploadResult = await cloudinary.uploader.upload(base64Image, {
