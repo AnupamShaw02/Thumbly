@@ -11,6 +11,8 @@ export interface IThumbnail extends Document {
     colorScheme: string;
     additionalDetails?: string;
   };
+  isPublic: boolean;
+  likes: string[];
   createdAt: Date;
 }
 
@@ -26,6 +28,8 @@ const ThumbnailSchema = new Schema<IThumbnail>(
       colorScheme: { type: String, required: true },
       additionalDetails: { type: String },
     },
+    isPublic: { type: Boolean, default: false, index: true },
+    likes: { type: [String], default: [] },
   },
   { timestamps: true }
 );

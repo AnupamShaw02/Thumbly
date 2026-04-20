@@ -12,9 +12,12 @@ import {
   Tag,
   Palette,
   Maximize2,
+  Globe,
+  Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { thumbnailApi } from '../services/api';
+import { useAuth } from '@clerk/clerk-react';
+import { thumbnailApi, communityApi } from '../services/api';
 import type { Thumbnail } from '../types';
 
 type PreviewMode = 'raw' | 'youtube' | 'mobile';
@@ -126,10 +129,12 @@ function YouTubeMobilePreview({ imageUrl, title }: { imageUrl: string; title: st
 export default function PreviewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [thumbnail, setThumbnail] = useState<Thumbnail | null>(null);
   const [loading, setLoading] = useState(true);
   const [previewMode, setPreviewMode] = useState<PreviewMode>('youtube');
   const [deleting, setDeleting] = useState(false);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -157,6 +162,20 @@ export default function PreviewPage() {
     } catch {
       toast.dismiss(toastId);
       toast.error('Download failed');
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    if (!thumbnail) return;
+    setTogglingVisibility(true);
+    try {
+      const res = await communityApi.toggleVisibility(thumbnail._id);
+      setThumbnail((prev) => prev ? { ...prev, isPublic: res.data.isPublic } : prev);
+      toast.success(res.data.isPublic ? 'Shared to Community!' : 'Removed from Community');
+    } catch {
+      toast.error('Failed to update visibility');
+    } finally {
+      setTogglingVisibility(false);
     }
   };
 
@@ -221,23 +240,23 @@ export default function PreviewPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleDownload}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-primary-500/20"
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-cyan-500/20"
             >
               <Download className="w-4 h-4" />
               Download
             </button>
-            <button
+            {thumbnail.userId === userId && <button
               onClick={handleDelete}
               disabled={deleting}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-sm font-semibold rounded-lg border border-red-500/20 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-sm font-semibold rounded-lg border border-cyan-500/20 transition-all disabled:opacity-50"
             >
               {deleting ? (
-                <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
               ) : (
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4 text-cyan-400" />
               )}
               Delete
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -337,18 +356,32 @@ export default function PreviewPage() {
                 <Palette className="w-4 h-4 text-primary-400" />
                 Quick Actions
               </h2>
+              {thumbnail.userId === userId && <button
+                onClick={handleToggleVisibility}
+                disabled={togglingVisibility}
+                className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm rounded-lg transition-all ${
+                  thumbnail.isPublic
+                    ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/20'
+                    : 'bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white'
+                }`}
+              >
+                {thumbnail.isPublic
+                  ? <Globe className="w-4 h-4" />
+                  : <Lock className="w-4 h-4 text-gray-500" />}
+                {thumbnail.isPublic ? 'Shared to Community' : 'Share to Community'}
+              </button>}
               <button
                 onClick={() => navigate('/generate')}
                 className="w-full flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-sm rounded-lg transition-all"
               >
-                <Wand2 className="w-4 h-4 text-primary-400" />
+                <Wand2 className="w-4 h-4 text-cyan-400" />
                 Generate Another
               </button>
               <button
                 onClick={() => navigate('/gallery')}
                 className="w-full flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-sm rounded-lg transition-all"
               >
-                <Image className="w-4 h-4 text-primary-400" />
+                <Image className="w-4 h-4 text-cyan-400" />
                 View All Thumbnails
               </button>
             </div>

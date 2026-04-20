@@ -3,6 +3,8 @@ export interface Thumbnail {
   userId: string;
   imageUrl: string;
   promptData: PromptData;
+  isPublic: boolean;
+  likes: string[];
   createdAt: string;
 }
 

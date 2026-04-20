@@ -11,6 +11,7 @@ import SignupPage from './pages/SignupPage';
 import GeneratePage from './pages/GeneratePage';
 import GalleryPage from './pages/GalleryPage';
 import PreviewPage from './pages/PreviewPage';
+import CommunityPage from './pages/CommunityPage';
 import ScrollToTop from './components/ScrollToTop';
 import { setTokenGetter } from './services/api';
 
@@ -56,6 +57,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/community" element={<CommunityPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

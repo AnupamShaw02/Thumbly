@@ -35,4 +35,16 @@ export const thumbnailApi = {
   delete: (id: string) => api.delete(`/thumbnails/${id}`),
 };
 
+// Community
+export const communityApi = {
+  getFeed: (style?: string, sort?: string) =>
+    api.get<{ thumbnails: Thumbnail[] }>('/community', { params: { style, sort } }),
+
+  like: (id: string) =>
+    api.post<{ likes: number; liked: boolean }>(`/community/${id}/like`),
+
+  toggleVisibility: (id: string) =>
+    api.patch<{ isPublic: boolean }>(`/community/${id}/visibility`),
+};
+
 export default api;

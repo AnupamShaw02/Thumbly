@@ -21,33 +21,29 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const xaiKey = process.env.XAI_API_KEY;
-    if (!xaiKey) {
-      res.status(500).json({ message: 'xAI API key not configured' });
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (!geminiKey) {
+      res.status(500).json({ message: 'Gemini API key not configured' });
       return;
     }
 
     const imagePrompt = `YouTube thumbnail for "${title}", ${style || 'modern'} style, ${colorScheme || 'vibrant'} color scheme, bold text overlay, high contrast, eye-catching, professional design${additionalDetails ? `, ${additionalDetails}` : ''}`;
 
-    // Call xAI (Grok) image generation API
-    const xaiResponse = await axios.post(
-      'https://api.x.ai/v1/images/generations',
+    // Call Google Imagen 3 via Gemini API
+    const imagenResponse = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${geminiKey}`,
       {
-        model: 'aurora',
-        prompt: imagePrompt,
-        n: 1,
+        instances: [{ prompt: imagePrompt }],
+        parameters: { sampleCount: 1, aspectRatio: '16:9' },
       },
       {
-        headers: {
-          'Authorization': `Bearer ${xaiKey}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         timeout: 60000,
       }
     );
 
-    const imageUrl = xaiResponse.data.data[0].url;
-    const base64Image = imageUrl;
+    const b64 = imagenResponse.data.predictions[0].bytesBase64Encoded;
+    const base64Image = `data:image/png;base64,${b64}`;
 
     // Upload to Cloudinary
     const uploadResult = await cloudinary.uploader.upload(base64Image, {
@@ -71,7 +67,11 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json({ thumbnail });
   } catch (err: any) {
-    console.error('Generate error:', err?.response?.data?.toString() || err.message);
+    const errData = err?.response?.data;
+    const errMsg = typeof errData === 'string' ? errData
+      : errData instanceof Buffer ? errData.toString('utf-8')
+      : errData ? JSON.stringify(errData) : err.message;
+    console.error('Generate error:', errMsg);
     res.status(500).json({ message: err.message || 'Generation failed' });
   }
 });
@@ -87,13 +87,13 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// GET /api/thumbnails/:id — get single thumbnail
+// GET /api/thumbnails/:id — get single thumbnail (owner or public)
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = getAuth(req) as { userId: string };
     const thumbnail = await Thumbnail.findOne({
       _id: req.params.id,
-      userId,
+      $or: [{ userId }, { isPublic: true }],
     });
 
     if (!thumbnail) {

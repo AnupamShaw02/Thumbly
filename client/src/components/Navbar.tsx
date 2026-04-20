@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Menu, X, LogOut, Image, Wand2, Home } from 'lucide-react';
+import { Zap, Menu, X, LogOut, Image, Wand2, Home, Users } from 'lucide-react';
 import { useUser, useClerk } from '@clerk/clerk-react';
 
 export default function Navbar() {
@@ -13,6 +13,7 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
+    { href: '/community', label: 'Community', icon: Users },
     ...(isSignedIn
       ? [
           { href: '/generate', label: 'Generate', icon: Wand2 },

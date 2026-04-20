@@ -5,6 +5,7 @@ import { clerkMiddleware, getAuth } from '@clerk/express';
 import { connectDB } from './config/db';
 import { configureCloudinary } from './config/cloudinary';
 import thumbnailRoutes from './routes/thumbnails';
+import communityRoutes from './routes/community';
 
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
@@ -33,6 +34,7 @@ app.use(async (_req, _res, next) => {
 });
 
 app.use('/api/thumbnails', thumbnailRoutes);
+app.use('/api/community', communityRoutes);
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
 // Debug: check if Clerk token is being received and verified
